@@ -1,6 +1,6 @@
 ### distributed training ###
 accelerate
-
+textdistance 
 datasets
 transformers
 opencv-python
