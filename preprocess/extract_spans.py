@@ -157,7 +157,7 @@ def convert_docvqa_to_cache(train_file, val_file, test_file, lowercase:bool, rea
         new_all_data = defaultdict(list)
         data = read_data(file)
         split = data["dataset_split"]
-        objs = data['data'][:10]
+        objs = data['data']
         num_answer_span_found = 0
         all_original_accepted = []
         all_extracted_not_clean = []
