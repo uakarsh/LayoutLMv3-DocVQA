@@ -151,13 +151,13 @@ def normalize_bbox(bbox, width, height):
     ]
 
 def convert_docvqa_to_cache(train_file, val_file, test_file, lowercase:bool, read_msr_ocr: bool = False,
-                            extraction_method="v1") -> DatasetDict:
+                            extraction_method="v3") -> DatasetDict:
     data_dict = {}
     for file in [train_file, val_file, test_file]:
         new_all_data = defaultdict(list)
         data = read_data(file)
         split = data["dataset_split"]
-        objs = data['data']
+        objs = data['data'][:10]
         num_answer_span_found = 0
         all_original_accepted = []
         all_extracted_not_clean = []
@@ -203,7 +203,7 @@ def convert_docvqa_to_cache(train_file, val_file, test_file, lowercase:bool, rea
                 # this only applies to test set.
                 new_all_data["original_answer"].append(["dummy answer"])
 
-            ocr_file = f"data/docvqa/{split}/ocr_results/{obj['ucsf_document_id']}_{obj['ucsf_document_page_no']}.json"
+            ocr_file = f"/kaggle/input/docvqa-dataset/{split}/{split}/ocr_results/{obj['ucsf_document_id']}_{obj['ucsf_document_page_no']}.json"
             ocr_data = read_data(ocr_file)
             assert len(ocr_data['recognitionResults']) == 1
             if msr_obj is None:
@@ -252,6 +252,9 @@ def convert_docvqa_to_cache(train_file, val_file, test_file, lowercase:bool, rea
                     processed_answers, all_not_found = extract_start_end_index_v2(before_processed_new_answers, before_processed_text)
                     if all_not_found:
                         processed_answers, _ = extract_start_end_index_v1(before_processed_new_answers, before_processed_text)
+                elif extraction_method == "v3":
+                    processed_answers, all_not_found = extract_start_end_index_v3(before_processed_new_answers, before_processed_text)
+                
             else:
                 processed_answers = [{
                     "start_word_position": -1,
@@ -292,15 +295,15 @@ def convert_docvqa_to_cache(train_file, val_file, test_file, lowercase:bool, rea
 
 if __name__ == '__main__':
     all_lowercase = True
-    read_msr = True ## default False, for data with MSR OCR, please contact me.
+    read_msr = False ## default False, for data with MSR OCR, please contact me.
     answer_extraction_methods = ["v3"] ## default v1, v2, v1_v2, v2_v1
     for answer_extraction_method in answer_extraction_methods:
-        dataset = convert_docvqa_to_cache("data/docvqa/train/train_v1.0.json",
-                                          "data/docvqa/val/val_v1.0.json",
-                                          "data/docvqa/test/test_v1.0.json",
+        dataset = convert_docvqa_to_cache("/kaggle/input/docvqa-dataset/train/train/train_v1.0.json",
+                                          "/kaggle/input/docvqa-dataset/val/val/val_v1.0.json",
+                                          "/kaggle/input/docvqa-dataset/test/test/test_v1.0.json",
                                           lowercase=all_lowercase,read_msr_ocr=read_msr,
                                           extraction_method=answer_extraction_method)
-        cached_filename = f"data/docvqa_cached_extractive_all_lowercase_{all_lowercase}_msr_{read_msr}_extraction_{answer_extraction_method}_enumeration"
+        cached_filename = f"./docvqa_cached_extractive_all_lowercase_{all_lowercase}_msr_{read_msr}_extraction_{answer_extraction_method}_enumeration"
         dataset.save_to_disk(cached_filename)
 
         ## for natural order
